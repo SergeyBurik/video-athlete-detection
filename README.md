@@ -48,3 +48,12 @@
 После того как регион спортсмена определён, он обрезается, и на него запускается **модель оценки поз YOLO Pose**, которая определяет **ключевые точки тела**.
 
 Эти ключевые точки наносятся на исходный кадр в виде красных точек. Обработанные кадры записываются **в выходное видео**.
+
+![example1](https://github.com/user-attachments/assets/f17883f9-f5f2-40c5-a0c3-07639893c5ff)
+![example2](https://github.com/user-attachments/assets/9beb311f-9cb2-4631-8a1f-d12222458eb2)
+![example3](https://github.com/user-attachments/assets/afb86ae9-224a-4466-8b7d-a2177c9b20d2)
+![example4](https://github.com/user-attachments/assets/a84bc3b5-6253-4091-97de-73c5441c531d)
+
+## Больше примеров в output_examples
+
+
