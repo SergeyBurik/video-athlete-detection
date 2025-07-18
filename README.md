@@ -1,59 +1,34 @@
 # video-athlete-detection
 
-# Детекция и отслеживание спортсмена
-## Основная цель — автоматически:
-1. находить спортсмена на видео (предварительно неизвестно, где находится спортсмен);
-2. отслеживать перемещение спортсмена на протяжении всего видео, даже с учетом смены ракурсов
-съемки;
-3. проводить эстимацию описывающей коробки и 2Д скелета.
-Требуется:
-• выбрать метод автоматического поиска спортсмена (и только его);
-• выбрать метод трекинга спортсмена;
-• выбрать метод эстимации описывающей коробки и 2D скелета человека;
-• реализовать пайплайн инференса системы.
+# Athlete Detection and Tracking
+## The main goal is to automatically:
+- locate the athlete in the video (without prior knowledge of their position),
+- track the athlete’s movements throughout the video, even when camera angles change,
+- estimate the bounding box and 2D skeleton.
 
-Ниже приведены **два** решения задачи.
+Tasks include selecting a detection method that finds only the athlete, choosing a tracking method, selecting a bounding box and 2D skeleton estimation method, and implementing the system’s inference pipeline.
 
-**Первое** использует модель **Grounding DINO**, которая находит спортсмена по **текстовому описанию**. Модель работает с минимальным количеством ложных детекций и демонстрирует **стабильно точные результаты**, однако каждый вызов этой модели длится дольше, чем более легковесные аналоги вроде YOLO.
+Two solutions are described below.
 
-**Второе** решение является **оптимизированной версией** первого решения. В нем **минимизируется количество вызовов** модели Grounding DINO. Эта модель вызывается всего 2 раза в секунду. Bounding boxes этой модели являются опорой для **более быстрой модели** YOLO (или любой аналогичной модели).
+## Solution 1
+This solution implements a system for automatic athlete detection, tracking, and pose estimation in video.
+It uses the **Grounding DINO** model for text-based detection at a rate of 5 times per second. After detection, the **CSRT tracker** is activated to track the athlete between detections.
+To improve speed, detection runs on a **resized version** of the frame, with coordinates scaled back to the original size.
+Once the athlete is detected or tracked, the corresponding region is cropped and passed to the **YOLO-Pose** model for pose estimation.
+The detected keypoints are displayed as red dots on the original frame.
+The processed video is saved as an output file.
+The code also supports GPU acceleration with mixed precision for faster computation.
 
-## Решение 1
-Это решение реализует систему автоматического **обнаружения, отслеживания и оценки позы спортсмена на видео**.
+## Solution 2
+This solution is an optimized version of the previous approach. **Grounding DINO** is used for initial detection, running at **a low frequency** (2 times per second), using resized frames for speed. The detected coordinates are scaled back to the original resolution. **Between DINO calls**, a **YOLO model** (or a similar lightweight model) is used to **refine** or update the athlete's position within an **expanded area around the last known location**. This region is dynamically enlarged horizontally and vertically to stabilize detection. If YOLO successfully finds the athlete, the coordinates are saved for further processing. Once the athlete’s region is defined, it is cropped and passed to the YOLO Pose model for body keypoint detection. The detected keypoints are then overlaid on the original frame as red dots, and the processed frames are saved as an output video.
 
-Оно использует модель **Grounding DINO** для детекции по текстовому описанию с частотой 5 раз в секунду.
-Затем активируется **трекер CSRT**, поддерживающий отслеживание спортсмена в промежутках **между детекциями**.
 
-Для повышения скорости детекция выполняется на **уменьшенной копии кадра**, а координаты масштабируются обратно.
-
-Если объект **успешно детектирован** или оттрекан, производится **обрезка** соответствующей **области**, на которую затем применяется модель YOLO **для оценки позы**.
-
-Полученные ключевые точки отображаются на оригинальном кадре в **виде красных точек**.
-
-Готовое видео записывается **в выходной файл**. Также в коде учитывается возможность работы на GPU с использованием смешанной точности для ускорения вычислений.
-
-## Решение 2
-Данное решение является оптимизированной версией прошлого подхода. 
-
-В процессе работы производится **либо первичная детекция** с помощью модели **Grounding DINO**, **либо уточнение** и обновление локализации спортсмена с помощью модели YOLO (или любой другой легковесной модели).
-
-**Grounding DINO** запускается **с низкой частотой** и выполняет обнаружение объектов на основе текстовых описаний, при этом обработка происходит на уменьшенной копии кадра для ускорения работы. Найденные координаты масштабируются обратно к исходному размеру изображения.
-
-В промежутках **между вызовами DINO**, модель **YOLO** применяется для **дообнаружения** или **уточнения** позиции спортсмена **в ограниченной области** вокруг **предыдущей детекции**.
-
-Эта **область расширяется** по горизонтали и вертикали на заданное значение, чтобы обеспечить **более устойчивое обнаружение**.
-
-Если YOLO успешно находит человека, его координаты сохраняются и используются **для последующей обработки**.
-
-После того как регион спортсмена определён, он обрезается, и на него запускается **модель оценки поз YOLO Pose**, которая определяет **ключевые точки тела**.
-
-Эти ключевые точки наносятся на исходный кадр в виде красных точек. Обработанные кадры записываются **в выходное видео**.
 
 ![example1](https://github.com/user-attachments/assets/f17883f9-f5f2-40c5-a0c3-07639893c5ff)
 ![example2](https://github.com/user-attachments/assets/9beb311f-9cb2-4631-8a1f-d12222458eb2)
 ![example3](https://github.com/user-attachments/assets/afb86ae9-224a-4466-8b7d-a2177c9b20d2)
 ![example4](https://github.com/user-attachments/assets/a84bc3b5-6253-4091-97de-73c5441c531d)
 
-## Больше примеров в output_examples
+## more examples in output_examples
 
 
